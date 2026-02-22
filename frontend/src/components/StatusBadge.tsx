@@ -2,6 +2,7 @@ import type { CourseStatus } from '../api/client';
 
 const colours: Record<CourseStatus, string> = {
   PENDING: 'bg-gray-100 text-gray-700',
+  PROVISIONING: 'bg-purple-100 text-purple-700',
   IN_PROGRESS: 'bg-blue-100 text-blue-700',
   COMPLETED: 'bg-green-100 text-green-700',
   FAILED: 'bg-red-100 text-red-700',

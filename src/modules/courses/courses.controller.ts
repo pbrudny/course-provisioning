@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -19,6 +20,7 @@ import {
 import { ApiKeyGuard } from '../../common/guards/api-key.guard';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 import { CourseResponseDto } from './dto/course-response.dto';
 import { ProvisioningStatusDto } from './dto/provisioning-status.dto';
 
@@ -31,7 +33,7 @@ export class CoursesController {
 
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Create a course and trigger provisioning' })
+  @ApiOperation({ summary: 'Create a course (provisioning must be started separately)' })
   @ApiResponse({ status: 202, type: CourseResponseDto })
   create(@Body() dto: CreateCourseDto): Promise<CourseResponseDto> {
     return this.coursesService.create(dto);
@@ -58,12 +60,27 @@ export class CoursesController {
     return this.coursesService.getStatus(id);
   }
 
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update course settings (seed template) while PENDING' })
+  @ApiResponse({ status: 200, type: CourseResponseDto })
+  update(@Param('id') id: string, @Body() dto: UpdateCourseDto): Promise<CourseResponseDto> {
+    return this.coursesService.update(id, dto);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a course and all its data' })
   @ApiResponse({ status: 204 })
   remove(@Param('id') id: string): Promise<void> {
     return this.coursesService.remove(id);
+  }
+
+  @Post(':id/provision')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: 'Start provisioning for a pending course' })
+  @ApiResponse({ status: 202 })
+  startProvisioning(@Param('id') id: string): Promise<{ message: string }> {
+    return this.coursesService.startProvisioning(id);
   }
 
   @Post(':id/retry')

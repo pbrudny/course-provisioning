@@ -13,6 +13,10 @@ export class SeedGroupContentStep extends BaseStep {
   }
 
   async execute(ctx: StepContext): Promise<void> {
+    const templateRow = ctx.course.seedTemplateId
+      ? await ctx.prisma.seedTemplate.findUnique({ where: { id: ctx.course.seedTemplateId } })
+      : null;
+
     for (const group of ctx.course.labGroups) {
       const seeded = await this.getExternalResource(
         ctx,
@@ -40,7 +44,7 @@ export class SeedGroupContentStep extends BaseStep {
         );
       }
 
-      await this.githubService.seedContent(repoName, ctx.course.id);
+      await this.githubService.seedContent(repoName, ctx.course.id, templateRow?.readme);
 
       await this.saveExternalResource(
         ctx,

@@ -13,6 +13,7 @@ enum CourseType {
 
 enum CourseStatus {
   PENDING
+  PROVISIONING
   IN_PROGRESS
   COMPLETED
   FAILED
@@ -36,22 +37,33 @@ enum AuditResult {
   FAILURE
 }
 
+model SeedTemplate {
+  id          String   @id @default(cuid())
+  label       String
+  description String?
+  readme      String
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Course {
-  id              String       @id @default(cuid())
-  name            String
-  semester        String
-  type            CourseType
-  status          CourseStatus @default(PENDING)
-  githubRepoName  String?
-  discordChannels String[]
-  discordGuildId  String?
-  lectureCount    Int?
-  labCount        Int?
-  lectureRoom     String?
-  lectureDay      String?
-  lectureTime     String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id               String       @id @default(cuid())
+  name             String
+  semester         String
+  type             CourseType
+  status           CourseStatus @default(PENDING)
+  githubRepoName   String?
+  discordChannels  String[]
+  discordGuildId   String?
+  lectureCount     Int?
+  labCount         Int?
+  lectureRoom      String?
+  lectureDay       String?
+  lectureTime      String?
+  seedTemplateId   String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   labGroups         LabGroup[]
   provisioningSteps ProvisioningStep[]

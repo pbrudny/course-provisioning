@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { CourseStatus, CourseType, ExternalService, StepStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 import { CourseResponseDto } from './dto/course-response.dto';
 import { ProvisioningStatusDto } from './dto/provisioning-status.dto';
 import { LECTURE_STEPS } from '../provisioning/state-machine/lecture.steps';
@@ -82,11 +83,29 @@ export class CoursesService {
       return created;
     });
 
+    this.logger.log(`Course ${course.id} created (provisioning not started)`);
+
+    return this.mapToResponse(course);
+  }
+
+  async startProvisioning(id: string): Promise<{ message: string }> {
+    const course = await this.prisma.course.findUnique({ where: { id } });
+
+    if (!course) {
+      throw new NotFoundException(`Course ${id} not found`);
+    }
+
+    if (course.status !== CourseStatus.PENDING) {
+      throw new BadRequestException(
+        `Course ${id} is not in PENDING state (current: ${course.status})`,
+      );
+    }
+
     const job = await this.provisioningQueue.add(
       'provision',
-      { courseId: course.id },
+      { courseId: id },
       {
-        jobId: `provision-${course.id}`,
+        jobId: `provision-${id}`,
         attempts: 5,
         backoff: { type: 'exponential', delay: 5000 },
         removeOnComplete: false,
@@ -96,15 +115,15 @@ export class CoursesService {
 
     await this.prisma.jobExecution.create({
       data: {
-        courseId: course.id,
-        bullJobId: job.id ?? `provision-${course.id}`,
+        courseId: id,
+        bullJobId: job.id ?? `provision-${id}`,
         attempt: 1,
       },
     });
 
-    this.logger.log(`Course ${course.id} created and enqueued for provisioning`);
+    this.logger.log(`Course ${id} provisioning started`);
 
-    return this.mapToResponse(course);
+    return { message: `Course ${id} provisioning started` };
   }
 
   async findAll(): Promise<CourseResponseDto[]> {
@@ -126,6 +145,28 @@ export class CoursesService {
     }
 
     return this.mapToResponse(course);
+  }
+
+  async update(id: string, dto: UpdateCourseDto): Promise<CourseResponseDto> {
+    const course = await this.prisma.course.findUnique({ where: { id } });
+
+    if (!course) {
+      throw new NotFoundException(`Course ${id} not found`);
+    }
+
+    if (course.status !== CourseStatus.PENDING) {
+      throw new BadRequestException(
+        `Course ${id} can only be updated in PENDING state (current: ${course.status})`,
+      );
+    }
+
+    const updated = await this.prisma.course.update({
+      where: { id },
+      data: { seedTemplateId: dto.seedTemplateId },
+      include: { labGroups: true, externalResources: true },
+    });
+
+    return this.mapToResponse(updated);
   }
 
   async getStatus(id: string): Promise<ProvisioningStatusDto> {
@@ -240,9 +281,22 @@ export class CoursesService {
       type: CourseType;
       status: CourseStatus;
       discordGuildId: string | null;
+      lectureCount: number | null;
+      labCount: number | null;
+      lectureRoom: string | null;
+      lectureDay: string | null;
+      lectureTime: string | null;
+      seedTemplateId: string | null;
       createdAt: Date;
       updatedAt: Date;
-      labGroups?: Array<{ id: string; name: string; number: number }>;
+      labGroups?: Array<{
+        id: string;
+        name: string;
+        number: number;
+        room: string | null;
+        day: string | null;
+        time: string | null;
+      }>;
       externalResources?: Array<{
         service: ExternalService;
         resourceType: string;
@@ -273,6 +327,12 @@ export class CoursesService {
       type: course.type,
       status: course.status,
       discordGuildId: course.discordGuildId ?? undefined,
+      lectureCount: course.lectureCount ?? undefined,
+      labCount: course.labCount ?? undefined,
+      lectureRoom: course.lectureRoom ?? undefined,
+      lectureDay: course.lectureDay ?? undefined,
+      lectureTime: course.lectureTime ?? undefined,
+      seedTemplateId: course.seedTemplateId ?? undefined,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
       githubRepoUrl,
@@ -290,6 +350,9 @@ export class CoursesService {
           githubRepoUrl: groupRepoResource
             ? `https://github.com/${org}/${groupRepoResource.externalId}`
             : undefined,
+          room: g.room ?? undefined,
+          day: g.day ?? undefined,
+          time: g.time ?? undefined,
         };
       }),
     };

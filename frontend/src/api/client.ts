@@ -1,5 +1,5 @@
 export type CourseType = 'LECTURE' | 'LABORATORY';
-export type CourseStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'RETRYING';
+export type CourseStatus = 'PENDING' | 'PROVISIONING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'RETRYING';
 export type StepStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
 
 export interface ProvisioningStep {
@@ -23,6 +23,9 @@ export interface LabGroupResponse {
   name: string;
   number: number;
   githubRepoUrl?: string;
+  room?: string;
+  day?: string;
+  time?: string;
 }
 
 export interface Course {
@@ -34,6 +37,22 @@ export interface Course {
   labGroups?: LabGroupResponse[];
   githubRepoUrl?: string;
   discordGuildId?: string;
+  lectureCount?: number;
+  labCount?: number;
+  lectureRoom?: string;
+  lectureDay?: string;
+  lectureTime?: string;
+  seedTemplateId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SeedTemplate {
+  id: string;
+  label: string;
+  description?: string;
+  readme: string;
+  isSystem: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,6 +63,9 @@ export interface LabGroupInput {
   githubRepoName?: string;
   discordChannelName?: string;
   discordRoleName?: string;
+  room?: string;
+  day?: string;
+  time?: string;
 }
 
 export interface CreateCoursePayload {
@@ -54,6 +76,11 @@ export interface CreateCoursePayload {
   githubRepoName?: string;
   discordChannels?: string[];
   labGroups?: LabGroupInput[];
+  lectureCount?: number;
+  labCount?: number;
+  lectureRoom?: string;
+  lectureDay?: string;
+  lectureTime?: string;
 }
 
 const API_KEY = import.meta.env.VITE_API_KEY as string;
@@ -96,9 +123,31 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  updateCourse: (id: string, body: { seedTemplateId?: string }) =>
+    request<Course>(`/courses/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  startProvisioning: (id: string) =>
+    request<{ message: string }>(`/courses/${id}/provision`, { method: 'POST' }),
+
   retryCourse: (id: string) =>
     request<{ message: string }>(`/courses/${id}/retry`, { method: 'POST' }),
 
   deleteCourse: (id: string) =>
     request<void>(`/courses/${id}`, { method: 'DELETE' }),
+
+  listTemplates: () => request<SeedTemplate[]>('/seed-templates'),
+
+  getTemplate: (id: string) => request<SeedTemplate>(`/seed-templates/${id}`),
+
+  createTemplate: (body: { label: string; description?: string; readme: string }) =>
+    request<SeedTemplate>('/seed-templates', { method: 'POST', body: JSON.stringify(body) }),
+
+  updateTemplate: (id: string, body: { label?: string; description?: string; readme?: string }) =>
+    request<SeedTemplate>(`/seed-templates/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+
+  deleteTemplate: (id: string) =>
+    request<void>(`/seed-templates/${id}`, { method: 'DELETE' }),
 };

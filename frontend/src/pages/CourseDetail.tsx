@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { api, type Course, type ProvisioningStep } from '../api/client';
+import { api, type Course, type ProvisioningStep, type SeedTemplate } from '../api/client';
 import { StatusBadge } from '../components/StatusBadge';
 
 const stepLabel = (name: string) =>
@@ -32,8 +32,12 @@ export function CourseDetail() {
 
   const [course, setCourse] = useState<Course | null>(null);
   const [steps, setSteps] = useState<ProvisioningStep[]>([]);
+  const [templates, setTemplates] = useState<SeedTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [provisioning, setProvisioning] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -46,12 +50,40 @@ export function CourseDetail() {
       .then(([c, s]) => {
         setCourse(c);
         setSteps(s.steps);
+        setSelectedTemplate(c.seedTemplateId ?? null);
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load'))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, [id]);
+
+  useEffect(() => {
+    api.listTemplates().then(setTemplates).catch(() => {});
+  }, []);
+
+  const handleSaveTemplate = async (templateId: string) => {
+    if (!id) return;
+    setSelectedTemplate(templateId);
+    setSavingTemplate(true);
+    try {
+      const updated = await api.updateCourse(id, { seedTemplateId: templateId });
+      setCourse(updated);
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
+  const handleStart = async () => {
+    if (!id) return;
+    setProvisioning(true);
+    try {
+      await api.startProvisioning(id);
+      load();
+    } finally {
+      setProvisioning(false);
+    }
+  };
 
   const handleRetry = async () => {
     if (!id) return;
@@ -124,7 +156,31 @@ export function CourseDetail() {
               <dt className="text-gray-500">Created</dt>
               <dd className="font-medium text-gray-800">{new Date(course.createdAt).toLocaleString()}</dd>
             </div>
+            {course.lectureCount != null && (
+              <div>
+                <dt className="text-gray-500">Lectures / semester</dt>
+                <dd className="font-medium text-gray-800">{course.lectureCount}</dd>
+              </div>
+            )}
+            {course.labCount != null && (
+              <div>
+                <dt className="text-gray-500">Labs / semester</dt>
+                <dd className="font-medium text-gray-800">{course.labCount}</dd>
+              </div>
+            )}
           </dl>
+
+          {/* Lecture schedule */}
+          {(course.lectureRoom || course.lectureDay || course.lectureTime) && (
+            <div className="mt-4 border-t border-gray-100 pt-3">
+              <p className="mb-1 text-xs font-medium text-gray-500 uppercase tracking-wide">Lecture schedule</p>
+              <p className="text-sm text-gray-800">
+                {[course.lectureDay, course.lectureTime, course.lectureRoom && `Room ${course.lectureRoom}`]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            </div>
+          )}
 
           {/* GitHub links */}
           {course.githubRepoUrl && (
@@ -168,14 +224,64 @@ export function CourseDetail() {
             <h2 className="mb-3 text-sm font-semibold text-gray-700">Lab Groups</h2>
             <ul className="divide-y divide-gray-100">
               {course.labGroups.map((g) => (
-                <li key={g.id} className="py-2 flex items-center justify-between">
-                  <span className="text-sm text-gray-800">
-                    <span className="font-medium">Group {g.number}</span>
-                    {g.name && <span className="ml-2 text-gray-500">— {g.name}</span>}
-                  </span>
+                <li key={g.id} className="py-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-800">
+                      <span className="font-medium">Group {g.number}</span>
+                      {g.name && <span className="ml-2 text-gray-500">— {g.name}</span>}
+                    </span>
+                    {g.githubRepoUrl && (
+                      <a
+                        href={g.githubRepoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        GitHub
+                      </a>
+                    )}
+                  </div>
+                  {(g.day || g.time || g.room) && (
+                    <p className="mt-0.5 text-xs text-gray-400">
+                      {[g.day, g.time, g.room && `Room ${g.room}`].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Seed template picker — only while PENDING */}
+        {course.status === 'PENDING' && (
+          <div className="rounded-lg border border-indigo-100 bg-white p-5 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-700">GitHub README Template</h2>
+              {savingTemplate && <span className="text-xs text-gray-400">Saving…</span>}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {templates.map((t) => {
+                const active = selectedTemplate === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => handleSaveTemplate(t.id)}
+                    disabled={savingTemplate}
+                    className={`rounded-lg border-2 p-3 text-left transition-colors disabled:opacity-50 ${
+                      active
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-200 hover:border-indigo-300'
+                    }`}
+                  >
+                    <p className={`text-sm font-medium ${active ? 'text-indigo-700' : 'text-gray-800'}`}>
+                      {t.label}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 leading-relaxed">{t.description}</p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -215,6 +321,15 @@ export function CourseDetail() {
 
         {/* Actions */}
         <div className="flex items-center gap-3">
+          {course.status === 'PENDING' && (
+            <button
+              onClick={handleStart}
+              disabled={provisioning}
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {provisioning ? 'Starting…' : 'Start Provisioning'}
+            </button>
+          )}
           {course.status === 'FAILED' && (
             <button
               onClick={handleRetry}

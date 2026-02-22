@@ -38,7 +38,10 @@ export class SeedGithubContentStep extends BaseStep {
       return; // already seeded
     }
 
-    await this.githubService.seedContent(repoName, ctx.course.id);
+    const templateRow = ctx.course.seedTemplateId
+      ? await ctx.prisma.seedTemplate.findUnique({ where: { id: ctx.course.seedTemplateId } })
+      : null;
+    await this.githubService.seedContent(repoName, ctx.course.id, templateRow?.readme);
 
     await this.saveExternalResource(
       ctx,

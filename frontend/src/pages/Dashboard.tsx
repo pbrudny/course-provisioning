@@ -37,12 +37,20 @@ export function Dashboard() {
       <header className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <h1 className="text-xl font-bold text-gray-900">Course Provisioning</h1>
-          <Link
-            to="/new"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            + New Course
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/templates"
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            >
+              Templates
+            </Link>
+            <Link
+              to="/new"
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            >
+              + New Course
+            </Link>
+          </div>
         </div>
       </header>
 

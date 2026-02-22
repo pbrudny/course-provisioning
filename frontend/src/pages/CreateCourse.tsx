@@ -10,6 +10,8 @@ const COURSES = [
 
 const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_CHANNELS = ['announcements', 'general', 'lectures', 'qa-help'];
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const TIME_SLOTS = ['8:00-9:40', '9:50-11:30', '11:40-13:20', '13:30-15:10'];
 
 export function CreateCourse() {
   const navigate = useNavigate();
@@ -26,6 +28,13 @@ export function CreateCourse() {
 
   // --- discord ---
   const [discordGuildId, setDiscordGuildId] = useState('');
+
+  // --- schedule ---
+  const [lectureCount, setLectureCount] = useState<number | ''>('');
+  const [labCount, setLabCount] = useState<number | ''>('');
+  const [lectureRoom, setLectureRoom] = useState('');
+  const [lectureDay, setLectureDay] = useState('');
+  const [lectureTime, setLectureTime] = useState('');
 
   // --- resource names ---
   const [githubRepoName, setGithubRepoName] = useState(repoBase);
@@ -82,6 +91,11 @@ export function CreateCourse() {
         githubRepoName: type === 'LECTURE' && githubRepoName.trim() ? githubRepoName.trim() : undefined,
         discordChannels: type === 'LECTURE' ? discordChannels.filter((c) => c.trim()) : undefined,
         labGroups: type === 'LABORATORY' ? labGroups : undefined,
+        lectureCount: lectureCount !== '' ? lectureCount : undefined,
+        labCount: labCount !== '' ? labCount : undefined,
+        lectureRoom: lectureRoom.trim() || undefined,
+        lectureDay: lectureDay || undefined,
+        lectureTime: lectureTime || undefined,
       });
       navigate('/');
     } catch (e: unknown) {
@@ -225,6 +239,80 @@ export function CreateCourse() {
                 />
               </div>
             )}
+          </div>
+
+          {/* Schedule card */}
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+            <h2 className="text-sm font-semibold text-gray-700">Schedule</h2>
+
+            {/* Class counts */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Lectures per semester</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  placeholder="e.g. 14"
+                  value={lectureCount}
+                  onChange={(e) => setLectureCount(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                  className={inputClass}
+                />
+              </div>
+              {type === 'LABORATORY' && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">Labs per semester</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    placeholder="e.g. 13"
+                    value={labCount}
+                    onChange={(e) => setLabCount(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                    className={inputClass}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Lecture schedule */}
+            <div>
+              <p className="mb-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Lecture slot</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Room</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 14B"
+                    value={lectureRoom}
+                    onChange={(e) => setLectureRoom(e.target.value)}
+                    className={smallInputClass}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Day</label>
+                  <select
+                    value={lectureDay}
+                    onChange={(e) => setLectureDay(e.target.value)}
+                    className={smallInputClass}
+                  >
+                    <option value="">— select —</option>
+                    {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Time</label>
+                  <select
+                    value={lectureTime}
+                    onChange={(e) => setLectureTime(e.target.value)}
+                    className={smallInputClass}
+                  >
+                    <option value="">— select —</option>
+                    {TIME_SLOTS.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Resource names card — lecture only */}

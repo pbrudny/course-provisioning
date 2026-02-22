@@ -64,6 +64,9 @@ export class CourseResponseDto {
   @ApiPropertyOptional()
   lectureTime?: string;
 
+  @ApiPropertyOptional()
+  seedTemplateId?: string;
+
   @ApiProperty()
   createdAt: Date;
 

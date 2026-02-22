@@ -1,5 +1,8 @@
 import type { LabGroupInput } from '../api/client';
 
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const TIME_SLOTS = ['8:00-9:40', '9:50-11:30', '11:40-13:20', '13:30-15:10'];
+
 interface Props {
   groups: LabGroupInput[];
   onChange: (groups: LabGroupInput[]) => void;
@@ -54,6 +57,10 @@ export function LabGroupFields({ groups, onChange, repoBase }: Props) {
   };
 
   const updateName = (index: number, field: 'githubRepoName' | 'discordChannelName' | 'discordRoleName', value: string) => {
+    onChange(groups.map((g, i) => (i === index ? { ...g, [field]: value } : g)));
+  };
+
+  const updateSchedule = (index: number, field: 'room' | 'day' | 'time', value: string) => {
     onChange(groups.map((g, i) => (i === index ? { ...g, [field]: value } : g)));
   };
 
@@ -129,6 +136,42 @@ export function LabGroupFields({ groups, onChange, repoBase }: Props) {
                 className={inputClass}
                 placeholder="auto-generated"
               />
+            </div>
+          </div>
+
+          {/* Schedule */}
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className={labelClass}>Room</label>
+              <input
+                type="text"
+                placeholder="e.g. 14B"
+                value={group.room ?? ''}
+                onChange={(e) => updateSchedule(i, 'room', e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Day</label>
+              <select
+                value={group.day ?? ''}
+                onChange={(e) => updateSchedule(i, 'day', e.target.value)}
+                className={inputClass}
+              >
+                <option value="">— select —</option>
+                {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Time</label>
+              <select
+                value={group.time ?? ''}
+                onChange={(e) => updateSchedule(i, 'time', e.target.value)}
+                className={inputClass}
+              >
+                <option value="">— select —</option>
+                {TIME_SLOTS.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
             </div>
           </div>
         </div>

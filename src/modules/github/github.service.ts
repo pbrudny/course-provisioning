@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Octokit } from '@octokit/rest';
 import { AuditService } from '../audit/audit.service';
+import { getTemplateReadme } from './seed-templates'; // fallback default README
 
 export interface GithubRepo {
   id: number;
@@ -11,14 +12,6 @@ export interface GithubRepo {
   cloneUrl: string;
 }
 
-const README_CONTENT = `# Course Repository
-
-Welcome to this course repository. This repository contains course materials, assignments, and resources.
-
-## Getting Started
-
-Please read the [syllabus](./syllabus.md) and [contributing guide](./CONTRIBUTING.md) before submitting any work.
-`;
 
 const SYLLABUS_CONTENT = `# Course Syllabus
 
@@ -208,7 +201,7 @@ export class GithubService implements OnModuleInit {
     );
   }
 
-  async seedContent(repoName: string, courseId: string): Promise<void> {
+  async seedContent(repoName: string, courseId: string, readmeContent?: string | null): Promise<void> {
     await this.auditService.withAudit(
       courseId,
       'GITHUB_SEED_CONTENT',
@@ -232,7 +225,7 @@ export class GithubService implements OnModuleInit {
 
         // Create blobs for all files
         const files = [
-          { path: 'README.md', content: README_CONTENT },
+          { path: 'README.md', content: readmeContent ?? getTemplateReadme(null) },
           { path: 'syllabus.md', content: SYLLABUS_CONTENT },
           { path: 'CONTRIBUTING.md', content: CONTRIBUTING_CONTENT },
           {
