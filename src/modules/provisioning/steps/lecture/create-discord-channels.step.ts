@@ -4,12 +4,22 @@ import { BaseStep, StepContext } from '../base.step';
 import { DiscordService } from '../../../discord/discord.service';
 import { LECTURE_STEP_NAMES } from '../../state-machine/lecture.steps';
 
-const LECTURE_CHANNELS = [
+const LECTURE_CHANNELS_FALLBACK = [
   'announcements',
   'general',
   'lectures',
   'qa-help',
 ] as const;
+
+function buildLectureChannels(lectureCount: number | null): string[] {
+  const count = lectureCount ?? 0;
+  if (count > 0) {
+    return Array.from({ length: count }, (_, i) =>
+      `lecture-${String(i + 1).padStart(2, '0')}`,
+    );
+  }
+  return [...LECTURE_CHANNELS_FALLBACK];
+}
 
 @Injectable()
 export class CreateDiscordChannelsStep extends BaseStep {
@@ -35,7 +45,7 @@ export class CreateDiscordChannelsStep extends BaseStep {
 
     const channels = ctx.course.discordChannels.length > 0
       ? ctx.course.discordChannels
-      : [...LECTURE_CHANNELS];
+      : buildLectureChannels(ctx.course.lectureCount);
 
     for (const channelName of channels) {
       const existing = await this.getExternalResource(

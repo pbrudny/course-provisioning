@@ -30,6 +30,8 @@ export class CreateGroupChannelsStep extends BaseStep {
       );
     }
 
+    const labCount = ctx.course.labCount ?? 1;
+
     for (const group of ctx.course.labGroups) {
       const roleId = await this.getExternalResource(
         ctx,
@@ -45,52 +47,60 @@ export class CreateGroupChannelsStep extends BaseStep {
         );
       }
 
-      const existing = await this.getExternalResource(
-        ctx,
-        ExternalService.DISCORD,
-        'CHANNEL',
-        `group-${group.number}`,
-        group.id,
-      );
+      const timeSlug = group.time
+        ? group.time.replace(/:/g, '_')
+        : `group-${group.number}`;
 
-      if (existing) {
-        continue;
+      for (let session = 1; session <= labCount; session++) {
+        const sessionKey = `group-${group.number}-session-${session}`;
+
+        const existing = await this.getExternalResource(
+          ctx,
+          ExternalService.DISCORD,
+          'CHANNEL',
+          sessionKey,
+          group.id,
+        );
+
+        if (existing) {
+          continue;
+        }
+
+        const channelName = `lab-${String(session).padStart(2, '0')}-group-${timeSlug}`;
+
+        // Create private channel with permission overwrites:
+        // - @everyone: deny VIEW_CHANNEL
+        // - group role: allow VIEW_CHANNEL
+        const channel = await this.discordService.createChannel(
+          guildId,
+          channelName,
+          0, // text
+          ctx.course.id,
+          {
+            permissionOverwrites: [
+              {
+                id: guildId, // @everyone role has same ID as the guild
+                type: 0,
+                deny: DENY_VIEW_CHANNEL,
+              },
+              {
+                id: roleId,
+                type: 0,
+                allow: ALLOW_VIEW_CHANNEL,
+              },
+            ],
+          },
+        );
+
+        await this.saveExternalResource(
+          ctx,
+          ExternalService.DISCORD,
+          'CHANNEL',
+          sessionKey,
+          channel.id,
+          group.id,
+        );
       }
-
-      const channelName = group.discordChannelName ?? `lab-group-${group.number}`;
-
-      // Create private channel with permission overwrites:
-      // - @everyone: deny VIEW_CHANNEL
-      // - group role: allow VIEW_CHANNEL
-      const channel = await this.discordService.createChannel(
-        guildId,
-        channelName,
-        0, // text
-        ctx.course.id,
-        {
-          permissionOverwrites: [
-            {
-              id: guildId, // @everyone role has same ID as the guild
-              type: 0,
-              deny: DENY_VIEW_CHANNEL,
-            },
-            {
-              id: roleId,
-              type: 0,
-              allow: ALLOW_VIEW_CHANNEL,
-            },
-          ],
-        },
-      );
-
-      await this.saveExternalResource(
-        ctx,
-        ExternalService.DISCORD,
-        'CHANNEL',
-        `group-${group.number}`,
-        channel.id,
-        group.id,
-      );
     }
   }
 }
