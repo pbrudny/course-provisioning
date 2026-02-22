@@ -31,6 +31,7 @@ export class ProvisioningProcessor extends WorkerHost {
 
   private readonly lectureSteps: BaseStep[];
   private readonly laboratorySteps: BaseStep[];
+  private readonly combinedSteps: BaseStep[];
 
   constructor(
     private readonly prisma: PrismaService,
@@ -66,6 +67,18 @@ export class ProvisioningProcessor extends WorkerHost {
       this.applyGroupBranchProtectionsStep,
       this.seedGroupContentStep,
     ];
+
+    // LABORATORY courses run lecture steps first (shared Discord server + lecture
+    // channels + shared GitHub repo), then group-specific steps. The lab
+    // CREATE_DISCORD_SERVER is skipped — the lecture step already handles it.
+    this.combinedSteps = [
+      ...this.lectureSteps,
+      this.createGroupRolesStep,
+      this.createGroupChannelsStep,
+      this.createGroupReposStep,
+      this.applyGroupBranchProtectionsStep,
+      this.seedGroupContentStep,
+    ];
   }
 
   async process(job: Job<ProvisionJobData>): Promise<void> {
@@ -84,7 +97,7 @@ export class ProvisioningProcessor extends WorkerHost {
     const steps =
       course.type === CourseType.LECTURE
         ? this.lectureSteps
-        : this.laboratorySteps;
+        : this.combinedSteps;
 
     await this.prisma.course.update({
       where: { id: courseId },

@@ -14,7 +14,7 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { CourseResponseDto } from './dto/course-response.dto';
 import { ProvisioningStatusDto } from './dto/provisioning-status.dto';
 import { LECTURE_STEPS } from '../provisioning/state-machine/lecture.steps';
-import { LABORATORY_STEPS } from '../provisioning/state-machine/laboratory.steps';
+import { COMBINED_STEPS } from '../provisioning/state-machine/combined.steps';
 
 export const PROVISIONING_QUEUE = 'provisioning';
 
@@ -38,7 +38,7 @@ export class CoursesService {
     }
 
     const steps =
-      dto.type === CourseType.LECTURE ? LECTURE_STEPS : LABORATORY_STEPS;
+      dto.type === CourseType.LECTURE ? LECTURE_STEPS : COMBINED_STEPS;
 
     const course = await this.prisma.$transaction(async (tx) => {
       const created = await tx.course.create({
