@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --version:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node -e:*)",
+      "WebFetch(domain:www.prisma.io)",
+      "WebFetch(domain:pris.ly)",
+      "Bash(docker-compose:*)",
+      "Bash(lsof:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker exec:*)",
+      "Bash(DATABASE_URL=postgresql://course_provisioning:course_provisioning@localhost:5432/course_provisioning npx prisma db push:*)",
+      "Bash(nc:*)",
+      "Bash(redis-cli:*)",
+      "Bash(export NVM_DIR=\"$HOME/.nvm\")",
+      "Bash(. \"$NVM_DIR/nvm.sh\")",
+      "Bash(nvm exec 22 npx:*)",
+      "Bash(xargs kill:*)"
+    ]
+  }
+}

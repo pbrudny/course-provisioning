@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CourseType {
+  LECTURE
+  LABORATORY
+}
+
+enum CourseStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  RETRYING
+}
+
+enum StepStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum ExternalService {
+  DISCORD
+  GITHUB
+}
+
+enum AuditResult {
+  SUCCESS
+  FAILURE
+}
+
+model Course {
+  id              String       @id @default(cuid())
+  name            String
+  semester        String
+  type            CourseType
+  status          CourseStatus @default(PENDING)
+  githubRepoName  String?
+  discordChannels String[]
+  discordGuildId  String?
+  lectureCount    Int?
+  labCount        Int?
+  lectureRoom     String?
+  lectureDay      String?
+  lectureTime     String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  labGroups         LabGroup[]
+  provisioningSteps ProvisioningStep[]
+  externalResources ExternalResource[]
+  auditLogs         AuditLog[]
+  jobExecutions     JobExecution[]
+}
+
+model LabGroup {
+  id                 String   @id @default(cuid())
+  courseId           String
+  name               String
+  number             Int
+  githubRepoName     String?
+  discordChannelName String?
+  discordRoleName    String?
+  room               String?
+  day                String?
+  time               String?
+  createdAt          DateTime @default(now())
+
+  course            Course             @relation(fields: [courseId], references: [id])
+  externalResources ExternalResource[]
+
+  @@unique([courseId, number])
+}
+
+model ProvisioningStep {
+  id         String     @id @default(cuid())
+  courseId   String
+  stepName   String
+  stepOrder  Int
+  status     StepStatus @default(PENDING)
+  attempts   Int        @default(0)
+  errorMsg   String?
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@unique([courseId, stepName])
+}
+
+model ExternalResource {
+  id           String          @id @default(cuid())
+  courseId     String
+  service      ExternalService
+  resourceType String
+  resourceKey  String
+  externalId   String
+  labGroupId   String?
+  createdAt    DateTime        @default(now())
+
+  course    Course    @relation(fields: [courseId], references: [id])
+  labGroup  LabGroup? @relation(fields: [labGroupId], references: [id])
+
+  @@unique([courseId, service, resourceType, resourceKey, labGroupId])
+}
+
+model AuditLog {
+  id              String      @id @default(cuid())
+  courseId        String
+  action          String
+  result          AuditResult
+  requestPayload  Json?
+  responsePayload Json?
+  errorMessage    String?
+  durationMs      Int
+  createdAt       DateTime    @default(now())
+
+  course Course @relation(fields: [courseId], references: [id])
+}
+
+model JobExecution {
+  id        String   @id @default(cuid())
+  courseId  String
+  bullJobId String
+  attempt   Int      @default(1)
+  createdAt DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id])
+}
