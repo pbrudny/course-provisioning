@@ -67,6 +67,9 @@ export class CourseResponseDto {
   @ApiPropertyOptional()
   seedTemplateId?: string;
 
+  @ApiPropertyOptional()
+  onboardingToken?: string;
+
   @ApiProperty()
   createdAt: Date;
 

@@ -12,4 +12,10 @@ export const envValidationSchema = Joi.object({
   DISCORD_GUILD_ID: Joi.string().required(),
   GITHUB_TOKEN: Joi.string().required(),
   GITHUB_ORG: Joi.string().required(),
+  SMTP_HOST: Joi.string().optional(),
+  SMTP_PORT: Joi.number().default(587),
+  SMTP_USER: Joi.string().optional(),
+  SMTP_PASS: Joi.string().optional(),
+  SMTP_FROM: Joi.string().optional(),
+  FRONTEND_URL: Joi.string().default('http://localhost:5173'),
 });

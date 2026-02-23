@@ -62,6 +62,7 @@ model Course {
   lectureDay       String?
   lectureTime      String?
   seedTemplateId   String?
+  onboardingToken  String?      @unique
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -70,6 +71,7 @@ model Course {
   externalResources ExternalResource[]
   auditLogs         AuditLog[]
   jobExecutions     JobExecution[]
+  students          Student[]
 }
 
 model LabGroup {
@@ -147,4 +149,21 @@ model JobExecution {
   createdAt DateTime @default(now())
 
   course Course @relation(fields: [courseId], references: [id])
+}
+
+model Student {
+  id                String    @id @default(cuid())
+  courseId          String
+  email             String
+  studentNumber     String
+  verificationToken String?   @unique
+  verifiedAt        DateTime?
+  agreedRules       Int       @default(0)
+  onboardingDone    Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, email])
 }

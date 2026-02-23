@@ -47,6 +47,7 @@ export class CoursesService {
           semester: dto.semester,
           type: dto.type,
           status: CourseStatus.PENDING,
+          onboardingToken: crypto.randomUUID(),
           githubRepoName: dto.githubRepoName,
           discordChannels: dto.discordChannels ?? [],
           discordGuildId: dto.discordGuildId,
@@ -287,6 +288,7 @@ export class CoursesService {
       lectureDay: string | null;
       lectureTime: string | null;
       seedTemplateId: string | null;
+      onboardingToken: string | null;
       createdAt: Date;
       updatedAt: Date;
       labGroups?: Array<{
@@ -333,6 +335,7 @@ export class CoursesService {
       lectureDay: course.lectureDay ?? undefined,
       lectureTime: course.lectureTime ?? undefined,
       seedTemplateId: course.seedTemplateId ?? undefined,
+      onboardingToken: course.onboardingToken ?? undefined,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
       githubRepoUrl,

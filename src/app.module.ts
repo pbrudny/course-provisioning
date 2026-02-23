@@ -7,6 +7,7 @@ import { ProvisioningModule } from './modules/provisioning/provisioning.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { HealthModule } from './health/health.module';
 import { SeedTemplatesModule } from './modules/seed-templates/seed-templates.module';
+import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import configuration from './config/configuration';
 import { envValidationSchema } from './config/env.validation';
 
@@ -32,6 +33,7 @@ import { envValidationSchema } from './config/env.validation';
     CoursesModule,
     ProvisioningModule,
     SeedTemplatesModule,
+    OnboardingModule,
     HealthModule,
   ],
 })

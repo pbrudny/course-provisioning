@@ -43,6 +43,7 @@ export interface Course {
   lectureDay?: string;
   lectureTime?: string;
   seedTemplateId?: string;
+  onboardingToken?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -150,4 +151,68 @@ export const api = {
 
   deleteTemplate: (id: string) =>
     request<void>(`/seed-templates/${id}`, { method: 'DELETE' }),
+};
+
+// ── Public onboarding API (no x-api-key required) ──────────────────────────
+
+export interface OnboardingCourse {
+  courseId: string;
+  name: string;
+  semester: string;
+}
+
+export interface OnboardingStudent {
+  studentId: string;
+  agreedRules: number;
+  onboardingDone: boolean;
+  discordInviteUrl?: string;
+}
+
+async function publicRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`/api${path}`, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...init?.headers },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const msg =
+      typeof body?.message === 'string'
+        ? body.message
+        : Array.isArray(body?.message)
+          ? body.message.join(', ')
+          : `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+export const onboardingApi = {
+  getCourse: (token: string) =>
+    publicRequest<OnboardingCourse>(`/onboarding/${token}`),
+
+  register: (token: string, body: { email: string; studentNumber: string }) =>
+    publicRequest<{ message: string }>(`/onboarding/${token}/register`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  verify: (verificationToken: string) =>
+    publicRequest<{ studentId: string; onboardingToken: string }>('/onboarding/verify', {
+      method: 'POST',
+      body: JSON.stringify({ verificationToken }),
+    }),
+
+  getStudent: (id: string) =>
+    publicRequest<OnboardingStudent>(`/onboarding/students/${id}`),
+
+  agreeRule: (id: string, ruleIndex: number) =>
+    publicRequest<void>(`/onboarding/students/${id}/rules/${ruleIndex}/agree`, {
+      method: 'POST',
+    }),
+
+  getInvite: (token: string) =>
+    publicRequest<{ inviteUrl: string }>(`/onboarding/${token}/invite`),
 };

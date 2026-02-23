@@ -13,6 +13,11 @@ export class ApiKeyGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
+
+    if (request.path.startsWith('/onboarding')) {
+      return true;
+    }
+
     const apiKey = request.headers['x-api-key'];
     const expectedKey = this.configService.get<string>('apiKey');
 

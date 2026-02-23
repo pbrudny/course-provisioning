@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import QRCode from 'qrcode';
 import { api, type Course, type ProvisioningStep, type SeedTemplate } from '../api/client';
 import { StatusBadge } from '../components/StatusBadge';
 
@@ -41,6 +42,8 @@ export function CourseDetail() {
   const [retrying, setRetrying] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const load = () => {
     if (!id) return;
@@ -61,6 +64,13 @@ export function CourseDetail() {
   useEffect(() => {
     api.listTemplates().then(setTemplates).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (course?.status === 'COMPLETED' && course.onboardingToken && qrCanvasRef.current) {
+      const url = `${window.location.origin}/onboard/${course.onboardingToken}`;
+      QRCode.toCanvas(qrCanvasRef.current, url, { width: 200 }).catch(() => {});
+    }
+  }, [course?.status, course?.onboardingToken]);
 
   const handleSaveTemplate = async (templateId: string) => {
     if (!id) return;
@@ -318,6 +328,40 @@ export function CourseDetail() {
             </ol>
           )}
         </div>
+
+        {/* Student Onboarding */}
+        {course.status === 'COMPLETED' && course.onboardingToken && (() => {
+          const onboardUrl = `${window.location.origin}/onboard/${course.onboardingToken}`;
+          return (
+            <div className="rounded-lg border border-green-200 bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-sm font-semibold text-gray-700">Student Onboarding</h2>
+              <div className="flex flex-col sm:flex-row gap-6 items-start">
+                <canvas ref={qrCanvasRef} className="rounded border border-gray-200" />
+                <div className="flex-1 space-y-3">
+                  <p className="text-xs text-gray-500">Share this link or QR code with students to start the onboarding process.</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={onboardUrl}
+                      className="flex-1 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-700 font-mono"
+                    />
+                    <button
+                      onClick={() => {
+                        void navigator.clipboard.writeText(onboardUrl).then(() => {
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        });
+                      }}
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                    >
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Actions */}
         <div className="flex items-center gap-3">

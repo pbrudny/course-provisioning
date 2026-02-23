@@ -17,7 +17,8 @@
       "Bash(export NVM_DIR=\"$HOME/.nvm\")",
       "Bash(. \"$NVM_DIR/nvm.sh\")",
       "Bash(nvm exec 22 npx:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(nvm exec 22 npm install:*)"
     ]
   }
 }
