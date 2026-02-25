@@ -151,7 +151,23 @@ export const api = {
 
   deleteTemplate: (id: string) =>
     request<void>(`/seed-templates/${id}`, { method: 'DELETE' }),
+
+  listStudents: (courseId: string) =>
+    request<StudentRecord[]>(`/courses/${courseId}/students`),
+
+  removeStudent: (courseId: string, studentId: string) =>
+    request<void>(`/courses/${courseId}/students/${studentId}`, { method: 'DELETE' }),
 };
+
+export interface StudentRecord {
+  id: string;
+  email: string;
+  studentNumber: string;
+  verified: boolean;
+  agreedRules: number;
+  onboardingDone: boolean;
+  createdAt: string;
+}
 
 // ── Public onboarding API (no x-api-key required) ──────────────────────────
 
@@ -215,4 +231,9 @@ export const onboardingApi = {
 
   getInvite: (token: string) =>
     publicRequest<{ inviteUrl: string }>(`/onboarding/${token}/invite`),
+
+  resendVerification: (studentId: string) =>
+    publicRequest<{ message: string }>(`/onboarding/students/${studentId}/resend`, {
+      method: 'POST',
+    }),
 };

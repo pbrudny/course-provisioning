@@ -113,6 +113,36 @@ export class OnboardingService {
     };
   }
 
+  async resendVerification(studentId: string): Promise<{ message: string }> {
+    const student = await this.prisma.student.findUnique({
+      where: { id: studentId },
+      include: { course: true },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    if (student.verifiedAt) {
+      throw new BadRequestException('Student is already verified');
+    }
+
+    const verificationToken = crypto.randomUUID();
+
+    await this.prisma.student.update({
+      where: { id: studentId },
+      data: { verificationToken },
+    });
+
+    await this.sendVerificationEmail(
+      student.email,
+      student.course.onboardingToken ?? '',
+      verificationToken,
+    );
+
+    return { message: 'Verification email resent' };
+  }
+
   async agreeRule(studentId: string, ruleIndex: number): Promise<void> {
     if (ruleIndex < 0 || ruleIndex > 2) {
       throw new BadRequestException('Rule index must be 0, 1, or 2');

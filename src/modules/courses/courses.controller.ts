@@ -90,4 +90,20 @@ export class CoursesController {
   retry(@Param('id') id: string): Promise<{ message: string }> {
     return this.coursesService.retry(id);
   }
+
+  @Get(':id/students')
+  @ApiOperation({ summary: 'List students registered for a course' })
+  listStudents(@Param('id') id: string) {
+    return this.coursesService.listStudents(id);
+  }
+
+  @Delete(':id/students/:studentId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove a student from a course' })
+  removeStudent(
+    @Param('id') id: string,
+    @Param('studentId') studentId: string,
+  ): Promise<void> {
+    return this.coursesService.removeStudent(id, studentId);
+  }
 }

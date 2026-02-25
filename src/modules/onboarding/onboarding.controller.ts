@@ -62,6 +62,13 @@ export class OnboardingController {
     return this.onboardingService.agreeRule(id, ruleIndex);
   }
 
+  @Post('students/:id/resend')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend verification email to a student' })
+  resendVerification(@Param('id') id: string): Promise<{ message: string }> {
+    return this.onboardingService.resendVerification(id);
+  }
+
   @Get(':token/invite')
   @ApiOperation({ summary: 'Get Discord invite URL for the course' })
   getInvite(@Param('token') token: string): Promise<{ inviteUrl: string }> {

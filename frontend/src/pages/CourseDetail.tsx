@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import QRCode from 'qrcode';
-import { api, type Course, type ProvisioningStep, type SeedTemplate } from '../api/client';
+import { api, onboardingApi, type Course, type ProvisioningStep, type SeedTemplate, type StudentRecord } from '../api/client';
 import { StatusBadge } from '../components/StatusBadge';
 
 const stepLabel = (name: string) =>
@@ -43,6 +43,9 @@ export function CourseDetail() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [students, setStudents] = useState<StudentRecord[]>([]);
+  const [deletingStudentId, setDeletingStudentId] = useState<string | null>(null);
+  const [resendingStudentId, setResendingStudentId] = useState<string | null>(null);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const load = () => {
@@ -71,6 +74,36 @@ export function CourseDetail() {
       QRCode.toCanvas(qrCanvasRef.current, url, { width: 200 }).catch(() => {});
     }
   }, [course?.status, course?.onboardingToken]);
+
+  useEffect(() => {
+    if (id) {
+      api.listStudents(id).then(setStudents).catch(() => {});
+    }
+  }, [id]);
+
+  const loadStudents = () => {
+    if (id) api.listStudents(id).then(setStudents).catch(() => {});
+  };
+
+  const handleDeleteStudent = async (studentId: string) => {
+    if (!id) return;
+    setDeletingStudentId(studentId);
+    try {
+      await api.removeStudent(id, studentId);
+      setStudents((prev) => prev.filter((s) => s.id !== studentId));
+    } finally {
+      setDeletingStudentId(null);
+    }
+  };
+
+  const handleResendVerification = async (studentId: string) => {
+    setResendingStudentId(studentId);
+    try {
+      await onboardingApi.resendVerification(studentId);
+    } finally {
+      setResendingStudentId(null);
+    }
+  };
 
   const handleSaveTemplate = async (templateId: string) => {
     if (!id) return;
@@ -362,6 +395,82 @@ export function CourseDetail() {
             </div>
           );
         })()}
+
+        {/* Students */}
+        {students.length > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-700">
+                Students
+                <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                  {students.length}
+                </span>
+              </h2>
+              <button onClick={loadStudents} className="text-xs text-gray-400 hover:text-gray-600">
+                Refresh
+              </button>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <th className="px-4 py-2 text-left">Email</th>
+                  <th className="px-4 py-2 text-left">Student #</th>
+                  <th className="px-4 py-2 text-center">Verified</th>
+                  <th className="px-4 py-2 text-center">Rules</th>
+                  <th className="px-4 py-2 text-center">Done</th>
+                  <th className="px-4 py-2" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {students.map((s) => (
+                  <tr key={s.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2.5 text-gray-800 font-mono text-xs">{s.email}</td>
+                    <td className="px-4 py-2.5 text-gray-600">{s.studentNumber}</td>
+                    <td className="px-4 py-2.5 text-center">
+                      {s.verified ? (
+                        <span className="text-green-600 font-medium">✓</span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`text-xs font-medium ${s.agreedRules === 7 ? 'text-green-600' : 'text-amber-600'}`}>
+                        {[0, 1, 2].filter((i) => s.agreedRules & (1 << i)).length}/3
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      {s.onboardingDone ? (
+                        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Done</span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">Pending</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {!s.verified && (
+                          <button
+                            onClick={() => { void handleResendVerification(s.id); }}
+                            disabled={resendingStudentId === s.id}
+                            className="text-xs text-indigo-600 hover:underline disabled:opacity-40"
+                          >
+                            {resendingStudentId === s.id ? 'Sending…' : 'Resend'}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => { void handleDeleteStudent(s.id); }}
+                          disabled={deletingStudentId === s.id}
+                          className="text-xs text-red-500 hover:underline disabled:opacity-40"
+                        >
+                          {deletingStudentId === s.id ? '…' : 'Remove'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center gap-3">

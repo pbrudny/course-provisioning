@@ -216,6 +216,39 @@ export class CoursesService {
     this.logger.log(`Course ${id} deleted`);
   }
 
+  async listStudents(id: string) {
+    const course = await this.prisma.course.findUnique({
+      where: { id },
+      include: { students: { orderBy: { createdAt: 'desc' } } },
+    });
+
+    if (!course) {
+      throw new NotFoundException(`Course ${id} not found`);
+    }
+
+    return course.students.map((s) => ({
+      id: s.id,
+      email: s.email,
+      studentNumber: s.studentNumber,
+      verified: s.verifiedAt !== null,
+      agreedRules: s.agreedRules,
+      onboardingDone: s.onboardingDone,
+      createdAt: s.createdAt,
+    }));
+  }
+
+  async removeStudent(courseId: string, studentId: string): Promise<void> {
+    const student = await this.prisma.student.findFirst({
+      where: { id: studentId, courseId },
+    });
+
+    if (!student) {
+      throw new NotFoundException(`Student ${studentId} not found`);
+    }
+
+    await this.prisma.student.delete({ where: { id: studentId } });
+  }
+
   async retry(id: string): Promise<{ message: string }> {
     const course = await this.prisma.course.findUnique({
       where: { id },
