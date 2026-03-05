@@ -17,17 +17,14 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DOKKU_SSH_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.DOKKU_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          echo "Host steve107.mikrus.xyz" >> ~/.ssh/config
-          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "  IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
-          echo "  Port 10107" >> ~/.ssh/config
+          ssh-keyscan -p 10107 steve107.mikrus.xyz >> ~/.ssh/known_hosts
 
-      - name: Push to Dokku (API)
+      - name: Deploy to Dokku
         run: |
           git remote add dokku-api ssh://dokku@steve107.mikrus.xyz:10107/course-provisioning-api
-          git push dokku-api main:main --force
+          git push dokku-api main
 
   deploy-frontend:
     name: Deploy Frontend
@@ -40,14 +37,11 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DOKKU_SSH_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.DOKKU_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          echo "Host steve107.mikrus.xyz" >> ~/.ssh/config
-          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "  IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
-          echo "  Port 10107" >> ~/.ssh/config
+          ssh-keyscan -p 10107 steve107.mikrus.xyz >> ~/.ssh/known_hosts
 
-      - name: Push to Dokku (Frontend)
+      - name: Deploy to Dokku
         run: |
           git remote add dokku-frontend ssh://dokku@steve107.mikrus.xyz:10107/course-provisioning-frontend
-          git push dokku-frontend main:main --force
+          git push dokku-frontend main
