@@ -36,7 +36,7 @@ export function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">Course Provisioning</h1>
+          <h1 className="text-xl font-bold text-gray-900">Course Provisioning Platform</h1>
           <div className="flex items-center gap-3">
             <Link
               to="/templates"
