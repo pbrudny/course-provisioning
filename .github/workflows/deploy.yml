@@ -19,12 +19,14 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.DOKKU_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H steve107.mikrus.xyz >> ~/.ssh/known_hosts
+          echo "Host steve107.mikrus.xyz" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
 
       - name: Push to Dokku (API)
         run: |
           git remote add dokku-api dokku@steve107.mikrus.xyz:course-provisioning-api
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519" git push dokku-api main:main --force
+          git push dokku-api main:main --force
 
   deploy-frontend:
     name: Deploy Frontend
@@ -39,9 +41,11 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.DOKKU_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H steve107.mikrus.xyz >> ~/.ssh/known_hosts
+          echo "Host steve107.mikrus.xyz" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
 
       - name: Push to Dokku (Frontend)
         run: |
           git remote add dokku-frontend dokku@steve107.mikrus.xyz:course-provisioning-frontend
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519" git push dokku-frontend main:main --force
+          git push dokku-frontend main:main --force
