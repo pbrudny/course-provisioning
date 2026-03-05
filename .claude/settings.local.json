@@ -18,7 +18,10 @@
       "Bash(. \"$NVM_DIR/nvm.sh\")",
       "Bash(nvm exec 22 npx:*)",
       "Bash(xargs kill:*)",
-      "Bash(nvm exec 22 npm install:*)"
+      "Bash(nvm exec 22 npm install:*)",
+      "Bash(psql \"postgresql://course_provisioning:course_provisioning@localhost:5433/course_provisioning\" -c 'UPDATE \"\"Course\"\" SET \"\"onboardingToken\"\" = gen_random_uuid\\(\\)::text WHERE \"\"onboardingToken\"\" IS NULL RETURNING id, name, \"\"onboardingToken\"\";')",
+      "Bash(xargs ps -p)",
+      "Bash(cat /Users/piotrbrudny/jsy/course-provisioning/.github/workflows/*.yml)"
     ]
   }
 }
