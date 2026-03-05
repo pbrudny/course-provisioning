@@ -2,7 +2,7 @@
 
 A production-grade NestJS backend that automates academic course setup by provisioning Discord servers and GitHub repositories with deterministic, idempotent, retry-safe workflows.
 
-## What It Does
+## What It Does?
 
 | Course Type | Discord | GitHub |
 |-------------|---------|--------|
@@ -230,7 +230,7 @@ src/
 | `AuditLog` | Append-only log of every external API call |
 | `JobExecution` | BullMQ job correlation records |
 
-## Development Scripts
+## Development Scripts 
 
 ```bash
 npm run start:dev          # watch mode
