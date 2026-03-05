@@ -22,10 +22,11 @@ jobs:
           echo "Host steve107.mikrus.xyz" >> ~/.ssh/config
           echo "  StrictHostKeyChecking no" >> ~/.ssh/config
           echo "  IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
+          echo "  Port 10107" >> ~/.ssh/config
 
       - name: Push to Dokku (API)
         run: |
-          git remote add dokku-api dokku@steve107.mikrus.xyz:course-provisioning-api
+          git remote add dokku-api ssh://dokku@steve107.mikrus.xyz:10107/course-provisioning-api
           git push dokku-api main:main --force
 
   deploy-frontend:
@@ -44,8 +45,9 @@ jobs:
           echo "Host steve107.mikrus.xyz" >> ~/.ssh/config
           echo "  StrictHostKeyChecking no" >> ~/.ssh/config
           echo "  IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
+          echo "  Port 10107" >> ~/.ssh/config
 
       - name: Push to Dokku (Frontend)
         run: |
-          git remote add dokku-frontend dokku@steve107.mikrus.xyz:course-provisioning-frontend
+          git remote add dokku-frontend ssh://dokku@steve107.mikrus.xyz:10107/course-provisioning-frontend
           git push dokku-frontend main:main --force
