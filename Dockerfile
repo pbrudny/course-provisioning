@@ -6,7 +6,9 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-RUN npx prisma generate
+# Dummy URL so prisma.config.ts can evaluate env("DATABASE_URL") during generate
+# (prisma generate does not connect to the DB — it only reads the schema)
+RUN DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy npx prisma generate
 RUN npm run build
 
 # ── Production stage ─────────────────────────────────────────────────────────
