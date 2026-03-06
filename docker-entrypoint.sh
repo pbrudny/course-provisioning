@@ -12,13 +12,14 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
-# Write .env so dotenv/config in prisma.config.ts picks up DATABASE_URL
-echo "DATABASE_URL=$DATABASE_URL" > /app/.env
+# Write .env to both locations so dotenv/config finds it wherever prisma.config.ts runs from
+printf 'DATABASE_URL=%s\n' "$DATABASE_URL" > /app/.env
+printf 'DATABASE_URL=%s\n' "$DATABASE_URL" > /app/prisma/.env
 
 echo "Running database migrations..."
 npx prisma migrate deploy
 
-rm -f /app/.env
+rm -f /app/.env /app/prisma/.env
 
 echo "Starting application..."
 exec node dist/main
