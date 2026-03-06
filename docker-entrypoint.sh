@@ -12,8 +12,13 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
+# Write .env so dotenv/config in prisma.config.ts picks up DATABASE_URL
+echo "DATABASE_URL=$DATABASE_URL" > /app/.env
+
 echo "Running database migrations..."
 npx prisma migrate deploy
+
+rm -f /app/.env
 
 echo "Starting application..."
 exec node dist/main
